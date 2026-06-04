@@ -52,8 +52,8 @@ async function main() {
       categoryId: menCategory.id,
       images: {
         create: [
-          { imageUrl: '/images/black-tshirt-1.jpg' },
-          { imageUrl: '/images/black-tshirt-2.jpg' },
+          { imageUrl: '/images/black-tshirt-1.jpg', color: 'Black' },
+          { imageUrl: '/images/black-tshirt-2.jpg', color: 'Black' },
         ],
       },
       variants: {
@@ -77,7 +77,8 @@ async function main() {
       categoryId: plainCategory.id,
       images: {
         create: [
-          { imageUrl: '/images/white-polo-1.jpg' },
+          { imageUrl: '/images/white-polo-1.jpg', color: 'White' },
+          { imageUrl: '/images/white-polo-2.jpg', color: 'White' },
         ],
       },
       variants: {
@@ -100,8 +101,8 @@ async function main() {
       categoryId: menCategory.id,
       images: {
         create: [
-          { imageUrl: '/images/navy-hoodie-1.jpg' },
-          { imageUrl: '/images/navy-hoodie-2.jpg' },
+          { imageUrl: '/images/navy-hoodie-1.jpg', color: 'Navy Blue' },
+          { imageUrl: '/images/navy-hoodie-2.jpg', color: 'Navy Blue' },
         ],
       },
       variants: {
@@ -118,16 +119,14 @@ async function main() {
   console.log('✅ Created initial 3 products');
 
   // Generate 9 more dummy products to have a total of 12
-  const images = [
-    '/images/black-tshirt-1.jpg',
-    '/images/white-polo-1.jpg',
-    '/images/navy-hoodie-1.jpg'
+  const colorImages = [
+    { color: 'Black', imageUrl: '/images/black-tshirt-1.jpg' },
+    { color: 'White', imageUrl: '/images/white-polo-1.jpg' },
+    { color: 'Blue', imageUrl: '/images/navy-hoodie-1.jpg' }
   ];
 
   for (let i = 1; i <= 9; i++) {
     const randomCategory = [menCategory, plainCategory][Math.floor(Math.random() * 2)];
-    const img1 = images[Math.floor(Math.random() * images.length)];
-    const img2 = images[Math.floor(Math.random() * images.length)];
 
     await prisma.product.create({
       data: {
@@ -137,10 +136,7 @@ async function main() {
         discount: Math.floor(Math.random() * 20),
         categoryId: randomCategory.id,
         images: {
-          create: [
-            { imageUrl: img1 },
-            { imageUrl: img2 },
-          ],
+          create: colorImages,
         },
         variants: {
           create: [
