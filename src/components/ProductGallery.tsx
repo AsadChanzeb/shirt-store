@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Download } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,27 @@ interface ProductGalleryProps {
     textError?: string;
 }
 
+type DesignItem = 'logo' | 'text';
+
+interface DesignPosition {
+    x: number;
+    y: number;
+}
+
+interface DragState {
+    item: DesignItem;
+    offsetX: number;
+    offsetY: number;
+}
+
+interface ResizeState {
+    startClientX: number;
+    startClientY: number;
+    startWidth: number;
+    aspectRatio: number;
+    corner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+}
+
 export default function ProductGallery({
     images,
     selectedImage,
@@ -35,7 +56,14 @@ export default function ProductGallery({
 }: ProductGalleryProps) {
     const activeImage = selectedImage || images[0]?.imageUrl || '/placeholder.jpg';
     const mainImageRef = useRef<HTMLDivElement | null>(null);
+    const logoRef = useRef<HTMLDivElement | null>(null);
+    const textRef = useRef<HTMLParagraphElement | null>(null);
     const thumbnailListRef = useRef<HTMLDivElement | null>(null);
+    const [logoPosition, setLogoPosition] = useState<DesignPosition>({ x: 50, y: 66 });
+    const [logoSize, setLogoSize] = useState(32);
+    const [textPosition, setTextPosition] = useState<DesignPosition>({ x: 50, y: 76 });
+    const [dragState, setDragState] = useState<DragState | null>(null);
+    const [resizeState, setResizeState] = useState<ResizeState | null>(null);
     const showThumbnailSlider = images.length > 4;
 
     const scrollThumbnails = (direction: 'up' | 'down') => {
@@ -151,6 +179,172 @@ export default function ProductGallery({
         return lines;
     };
 
+    const clampPositionInsideImage = (
+        clientX: number,
+        clientY: number,
+        item: DesignItem,
+        offsetX: number,
+        offsetY: number
+    ) => {
+        const container = mainImageRef.current;
+        const itemElement = item === 'logo' ? logoRef.current : textRef.current;
+
+        if (!container || !itemElement) {
+            return null;
+        }
+
+        const containerRect = container.getBoundingClientRect();
+        const itemRect = itemElement.getBoundingClientRect();
+        const halfWidth = itemRect.width / 2;
+        const halfHeight = itemRect.height / 2;
+        const minX = halfWidth;
+        const maxX = containerRect.width - halfWidth;
+        const minY = halfHeight;
+        const maxY = containerRect.height - halfHeight;
+        const nextCenterX = clientX - containerRect.left - offsetX;
+        const nextCenterY = clientY - containerRect.top - offsetY;
+        const clampedX = Math.max(minX, Math.min(nextCenterX, maxX));
+        const clampedY = Math.max(minY, Math.min(nextCenterY, maxY));
+
+        return {
+            x: (clampedX / containerRect.width) * 100,
+            y: (clampedY / containerRect.height) * 100,
+        };
+    };
+
+    const updateDesignPosition = (item: DesignItem, position: DesignPosition) => {
+        if (item === 'logo') {
+            setLogoPosition(position);
+            return;
+        }
+
+        setTextPosition(position);
+    };
+
+    const startDesignDrag = (event: ReactPointerEvent<HTMLElement>, item: DesignItem) => {
+        const itemElement = item === 'logo' ? logoRef.current : textRef.current;
+
+        if (!itemElement) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const itemRect = itemElement.getBoundingClientRect();
+        setDragState({
+            item,
+            offsetX: event.clientX - (itemRect.left + itemRect.width / 2),
+            offsetY: event.clientY - (itemRect.top + itemRect.height / 2),
+        });
+    };
+
+    const startLogoResize = (
+        event: ReactPointerEvent<HTMLButtonElement>,
+        corner: ResizeState['corner']
+    ) => {
+        const logoElement = logoRef.current;
+
+        if (!logoElement) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const logoRect = logoElement.getBoundingClientRect();
+        setResizeState({
+            startClientX: event.clientX,
+            startClientY: event.clientY,
+            startWidth: logoRect.width,
+            aspectRatio: logoRect.height / logoRect.width || 1,
+            corner,
+        });
+    };
+
+    const getResizeDelta = (event: PointerEvent, state: ResizeState) => {
+        const horizontalDelta =
+            state.corner.includes('right')
+                ? event.clientX - state.startClientX
+                : state.startClientX - event.clientX;
+        const verticalDelta =
+            state.corner.includes('bottom')
+                ? event.clientY - state.startClientY
+                : state.startClientY - event.clientY;
+
+        return Math.abs(horizontalDelta) > Math.abs(verticalDelta)
+            ? horizontalDelta
+            : verticalDelta;
+    };
+
+    useEffect(() => {
+        if (!dragState) {
+            return;
+        }
+
+        const handlePointerMove = (event: PointerEvent) => {
+            const nextPosition = clampPositionInsideImage(
+                event.clientX,
+                event.clientY,
+                dragState.item,
+                dragState.offsetX,
+                dragState.offsetY
+            );
+
+            if (nextPosition) {
+                updateDesignPosition(dragState.item, nextPosition);
+            }
+        };
+
+        const handlePointerUp = () => {
+            setDragState(null);
+        };
+
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
+
+        return () => {
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+        };
+    }, [dragState]);
+
+    useEffect(() => {
+        if (!resizeState) {
+            return;
+        }
+
+        const handlePointerMove = (event: PointerEvent) => {
+            const container = mainImageRef.current;
+
+            if (!container) {
+                return;
+            }
+
+            const containerRect = container.getBoundingClientRect();
+            const centerX = (logoPosition.x / 100) * containerRect.width;
+            const centerY = (logoPosition.y / 100) * containerRect.height;
+            const maxWidthByX = Math.max(48, Math.min(centerX, containerRect.width - centerX) * 2);
+            const maxWidthByY = Math.max(48, (Math.min(centerY, containerRect.height - centerY) * 2) / resizeState.aspectRatio);
+            const maxWidth = Math.min(maxWidthByX, maxWidthByY);
+            const nextWidth = Math.max(48, Math.min(resizeState.startWidth + getResizeDelta(event, resizeState), maxWidth));
+
+            setLogoSize((nextWidth / containerRect.width) * 100);
+        };
+
+        const handlePointerUp = () => {
+            setResizeState(null);
+        };
+
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
+
+        return () => {
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+        };
+    }, [logoPosition, resizeState]);
+
     const handleDownloadDesign = async () => {
         try {
             const canvasSize = 1200;
@@ -169,10 +363,12 @@ export default function ProductGallery({
 
             const displayWidth = mainImageRef.current?.clientWidth || canvasSize;
             const scale = canvasSize / displayWidth;
-            const overlayWidth = 208 * scale;
-            const overlayCenterX = canvasSize / 2;
-            const overlayCenterY = canvasSize * 0.7;
-            const overlayGap = 8 * scale;
+            const logoOverlayWidth = (logoSize / 100) * canvasSize;
+            const textOverlayWidth = 208 * scale;
+            const logoCenterX = (logoPosition.x / 100) * canvasSize;
+            const logoCenterY = (logoPosition.y / 100) * canvasSize;
+            const textCenterX = (textPosition.x / 100) * canvasSize;
+            const textCenterY = (textPosition.y / 100) * canvasSize;
             const canvasTextSize = textSize * scale;
             let logoImage: HTMLImageElement | null = null;
             let logoHeight = 0;
@@ -185,34 +381,27 @@ export default function ProductGallery({
 
             if (logoPreview) {
                 logoImage = await loadCanvasImage(logoPreview);
-                logoHeight = overlayWidth * (logoImage.naturalHeight / logoImage.naturalWidth);
+                logoHeight = logoOverlayWidth * (logoImage.naturalHeight / logoImage.naturalWidth);
             }
 
             if (customText.trim() && !textError) {
-                textLines = getWrappedLines(context, customText.trim(), overlayWidth);
+                textLines = getWrappedLines(context, customText.trim(), textOverlayWidth);
                 textHeight = textLines.length * canvasTextSize * 1.2;
             }
-
-            const totalHeight =
-                logoHeight +
-                textHeight +
-                (logoHeight > 0 && textHeight > 0 ? overlayGap : 0);
-            let currentY = overlayCenterY - totalHeight / 2;
 
             context.shadowColor = 'rgba(0, 0, 0, 0.28)';
             context.shadowBlur = 10 * scale;
             context.shadowOffsetY = 2 * scale;
 
             if (logoImage) {
-                drawContainedImage(context, logoImage, overlayCenterX, currentY, overlayWidth);
-                currentY += logoHeight + (textHeight > 0 ? overlayGap : 0);
+                drawContainedImage(context, logoImage, logoCenterX, logoCenterY - logoHeight / 2, logoOverlayWidth);
             }
 
             if (textLines.length > 0) {
                 context.fillStyle = textColor;
                 context.font = `700 ${canvasTextSize}px "${fontFamily}", sans-serif`;
                 textLines.forEach((line, index) => {
-                    context.fillText(line, overlayCenterX, currentY + index * canvasTextSize * 1.2, overlayWidth);
+                    context.fillText(line, textCenterX, textCenterY - textHeight / 2 + index * canvasTextSize * 1.2, textOverlayWidth);
                 });
             }
 
@@ -314,25 +503,55 @@ export default function ProductGallery({
                     <Download className="h-5 w-5" aria-hidden="true" />
                 </button>
 
-                <div className="absolute left-1/2 top-[70%] z-10 flex w-52 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2">
-                    {logoPreview && (
-                        // eslint-disable-next-line @next/next/no-img-element
+                {logoPreview && (
+                    <div
+                        ref={logoRef}
+                        onPointerDown={(event) => startDesignDrag(event, 'logo')}
+                        className="absolute z-10 -translate-x-1/2 -translate-y-1/2 cursor-move touch-none select-none rounded-md outline outline-0 transition hover:outline-2 hover:outline-black/30"
+                        style={{ left: `${logoPosition.x}%`, top: `${logoPosition.y}%`, width: `${logoSize}%` }}
+                        title="Drag logo"
+                    >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={logoPreview}
                             alt="Uploaded logo preview"  draggable={false}
                             className="w-full  max-w-full object-contain drop-shadow-md"
                         />
-                    )}
+                        {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((corner) => (
+                            <button
+                                key={corner}
+                                type="button"
+                                onPointerDown={(event) => startLogoResize(event, corner)}
+                                className={cn(
+                                    'absolute h-4 w-4 rounded-full border-2 border-white bg-black shadow-md',
+                                    corner === 'top-left' && '-left-2 -top-2 cursor-nwse-resize',
+                                    corner === 'top-right' && '-right-2 -top-2 cursor-nesw-resize',
+                                    corner === 'bottom-left' && '-bottom-2 -left-2 cursor-nesw-resize',
+                                    corner === 'bottom-right' && '-bottom-2 -right-2 cursor-nwse-resize'
+                                )}
+                                aria-label={`Resize logo from ${corner.replace('-', ' ')}`}
+                            />
+                        ))}
+                    </div>
+                )}
 
-                    {customText.trim() && !textError && (
-                        <p
-                            className="max-w-full break-words text-center font-bold leading-tight drop-shadow-md"
-                            style={{ color: textColor, fontFamily, fontSize: `${textSize}px` }}
-                        >
-                            {customText}
-                        </p>
-                    )}
-                </div>
+                {customText.trim() && !textError && (
+                    <p
+                        ref={textRef}
+                        onPointerDown={(event) => startDesignDrag(event, 'text')}
+                        className="absolute z-10 w-52 max-w-full -translate-x-1/2 -translate-y-1/2 cursor-move touch-none select-none break-words rounded-md text-center font-bold leading-tight drop-shadow-md outline outline-0 transition hover:outline-2 hover:outline-black/30"
+                        style={{
+                            color: textColor,
+                            fontFamily,
+                            fontSize: `${textSize}px`,
+                            left: `${textPosition.x}%`,
+                            top: `${textPosition.y}%`,
+                        }}
+                        title="Drag text"
+                    >
+                        {customText}
+                    </p>
+                )}
             </div>
 
         </div>
