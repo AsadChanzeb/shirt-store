@@ -53,12 +53,12 @@ export default async function OrdersPage() {
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
                                         <p className="text-sm text-gray-600">Order #{order.id.slice(0, 8)}</p>
-                                        <p className="text-sm text-gray-600">
+                                        <p className="text-sm text-gray-600" suppressHydrationWarning>
                                             {new Date(order.createdAt).toLocaleDateString()}
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-bold text-lg">${Number(order.totalAmount).toFixed(2)}</p>
+                                        <p className="font-bold text-lg">Rs. {Number(order.totalAmount).toFixed(2)}</p>
                                         <p className="text-sm text-gray-600">{order.status}</p>
                                     </div>
                                 </div>

@@ -1,20 +1,328 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { ChevronDown, ChevronUp, Download } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+
+interface ProductGalleryProps {
+    images: ProductImage[];
+    selectedImage?: string;
+    onImageSelect?: (imageUrl: string) => void;
+    logoPreview?: string | null;
+    customText?: string;
+    fontFamily?: string;
+    textColor?: string;
+    textSize?: number;
+    textError?: string;
+    logoPosition?: { x: number; y: number };
+    textPosition?: { x: number; y: number };
+    onLogoPositionChange?: (pos: { x: number; y: number }) => void;
+    onTextPositionChange?: (pos: { x: number; y: number }) => void;
+    logoScale?: number;
+    shirtColor?: string;
+    objectFit?: 'cover' | 'contain';
+}
 
 interface ProductImage {
     id: string;
     imageUrl: string;
+    color?: string | null;
 }
 
-interface ProductGalleryProps {
-    images: ProductImage[];
-}
+export default function ProductGallery({
+    images,
+    selectedImage,
+    onImageSelect,
+    logoPreview = null,
+    customText = '',
+    fontFamily = 'Arial',
+    textColor = '#111827',
+    textSize = 48,
+    textError = '',
+    logoPosition = { x: 50, y: 40 },
+    textPosition = { x: 50, y: 65 },
+    onLogoPositionChange,
+    onTextPositionChange,
+    logoScale = 100,
+    shirtColor,
+    objectFit = 'cover',
+}: ProductGalleryProps) {
+    const [localActiveImage, setLocalActiveImage] = useState<string | null>(null);
+    const activeImage = selectedImage || localActiveImage || images[0]?.imageUrl || '/placeholder.jpg';
+    const isCustomTemplate = activeImage.includes('shirt-front') || activeImage.includes('shirt-back');
+    
+    useEffect(() => {
+        const handleVariantSelected = (e: Event) => {
+            const variant = (e as CustomEvent).detail;
+            if (variant && variant.color) {
+                const matchingImage = images.find(
+                    (img) => img.color?.toLowerCase() === variant.color.toLowerCase()
+                );
+                if (matchingImage) {
+                    if (onImageSelect) {
+                        onImageSelect(matchingImage.imageUrl);
+                    } else {
+                        setLocalActiveImage(matchingImage.imageUrl);
+                    }
+                }
+            }
+        };
+        window.addEventListener('variant-selected', handleVariantSelected);
+        return () => window.removeEventListener('variant-selected', handleVariantSelected);
+    }, [images, onImageSelect]);
 
-export default function ProductGallery({ images }: ProductGalleryProps) {
-    const [selectedImage, setSelectedImage] = useState(images[0]?.imageUrl || '/placeholder.jpg');
+    const mainImageRef = useRef<HTMLDivElement | null>(null);
+    const thumbnailListRef = useRef<HTMLDivElement | null>(null);
+    const showThumbnailSlider = images.length > 4;
+
+    const scrollThumbnails = (direction: 'up' | 'down') => {
+        thumbnailListRef.current?.scrollBy({
+            top: direction === 'down' ? 112 : -112,
+            behavior: 'smooth',
+        });
+    };
+
+    const loadCanvasImage = async (src: string) => {
+        const image = document.createElement('img');
+        image.decoding = 'async';
+
+        if (src.startsWith('blob:') || src.startsWith('data:')) {
+            image.src = src;
+        } else {
+            try {
+                const response = await fetch(src);
+                const blob = await response.blob();
+                image.src = URL.createObjectURL(blob);
+            } catch {
+                image.crossOrigin = 'anonymous';
+                image.src = src;
+            }
+        }
+
+        await new Promise<void>((resolve, reject) => {
+            image.onload = () => resolve();
+            image.onerror = () => reject(new Error('Image could not be loaded'));
+        });
+
+        return image;
+    };
+
+    const drawCoveredImage = (
+        context: CanvasRenderingContext2D,
+        image: HTMLImageElement,
+        x: number,
+        y: number,
+        width: number,
+        height: number
+    ) => {
+        const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+        const sourceWidth = width / scale;
+        const sourceHeight = height / scale;
+        const sourceX = (image.naturalWidth - sourceWidth) / 2;
+        const sourceY = (image.naturalHeight - sourceHeight) / 2;
+
+        context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, x, y, width, height);
+    };
+
+    const drawContainedImage = (
+        context: CanvasRenderingContext2D,
+        image: HTMLImageElement,
+        centerX: number,
+        y: number,
+        maxWidth: number
+    ) => {
+        const width = maxWidth;
+        const height = width * (image.naturalHeight / image.naturalWidth);
+        context.drawImage(image, centerX - width / 2, y, width, height);
+
+        return height;
+    };
+
+    const getWrappedLines = (
+        context: CanvasRenderingContext2D,
+        text: string,
+        maxWidth: number
+    ) => {
+        const lines: string[] = [];
+        const words = text.split(/\s+/).filter(Boolean);
+        let currentLine = '';
+
+        words.forEach((word) => {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+
+            if (context.measureText(testLine).width <= maxWidth) {
+                currentLine = testLine;
+                return;
+            }
+
+            if (currentLine) {
+                lines.push(currentLine);
+            }
+
+            if (context.measureText(word).width <= maxWidth) {
+                currentLine = word;
+                return;
+            }
+
+            let chunk = '';
+            Array.from(word).forEach((letter) => {
+                const testChunk = `${chunk}${letter}`;
+
+                if (context.measureText(testChunk).width <= maxWidth) {
+                    chunk = testChunk;
+                    return;
+                }
+
+                if (chunk) {
+                    lines.push(chunk);
+                }
+                chunk = letter;
+            });
+            currentLine = chunk;
+        });
+
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+
+        return lines;
+    };
+
+    const handleStartDrag = (
+        e: React.MouseEvent | React.TouchEvent,
+        type: 'logo' | 'text'
+    ) => {
+        e.preventDefault();
+        
+        const container = mainImageRef.current;
+        if (!container) return;
+
+        const rect = container.getBoundingClientRect();
+        
+        const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
+            const clientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+            const clientY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+            
+            // Calculate percentage position
+            let x = ((clientX - rect.left) / rect.width) * 100;
+            let y = ((clientY - rect.top) / rect.height) * 100;
+            
+            // Clamp coordinates to keep elements within the shirt preview area
+            x = Math.max(10, Math.min(90, x));
+            y = Math.max(10, Math.min(90, y));
+            
+            if (type === 'logo' && onLogoPositionChange) {
+                onLogoPositionChange({ x, y });
+            } else if (type === 'text' && onTextPositionChange) {
+                onTextPositionChange({ x, y });
+            }
+        };
+        
+        const upHandler = () => {
+            document.removeEventListener('mousemove', moveHandler);
+            document.removeEventListener('mouseup', upHandler);
+            document.removeEventListener('touchmove', moveHandler);
+            document.removeEventListener('touchend', upHandler);
+        };
+        
+        document.addEventListener('mousemove', moveHandler);
+        document.addEventListener('mouseup', upHandler);
+        document.addEventListener('touchmove', moveHandler);
+        document.addEventListener('touchend', upHandler);
+    };
+
+    const handleDownloadDesign = async () => {
+        try {
+            const canvasSize = 1200;
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            if (!context) {
+                return;
+            }
+
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+
+            const productImage = await loadCanvasImage(activeImage);
+            const isCustomTemplate = activeImage.includes('shirt-front') || activeImage.includes('shirt-back');
+
+            if (isCustomTemplate && shirtColor) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvasSize;
+                tempCanvas.height = canvasSize;
+                const tempCtx = tempCanvas.getContext('2d');
+                if (tempCtx) {
+                    drawCoveredImage(tempCtx, productImage, 0, 0, canvasSize, canvasSize);
+                    tempCtx.globalCompositeOperation = 'source-in';
+                    tempCtx.fillStyle = shirtColor;
+                    tempCtx.fillRect(0, 0, canvasSize, canvasSize);
+                    tempCtx.globalCompositeOperation = 'multiply';
+                    drawCoveredImage(tempCtx, productImage, 0, 0, canvasSize, canvasSize);
+                    context.drawImage(tempCanvas, 0, 0);
+                } else {
+                    drawCoveredImage(context, productImage, 0, 0, canvasSize, canvasSize);
+                }
+            } else {
+                drawCoveredImage(context, productImage, 0, 0, canvasSize, canvasSize);
+            }
+
+            const displayWidth = mainImageRef.current?.clientWidth || canvasSize;
+            const scale = canvasSize / displayWidth;
+            const overlayWidth = 208 * scale;
+            const canvasTextSize = textSize * scale;
+            let logoImage: HTMLImageElement | null = null;
+            let logoHeight = 0;
+            let textHeight = 0;
+            let textLines: string[] = [];
+
+            context.font = `700 ${canvasTextSize}px "${fontFamily}", sans-serif`;
+            context.textAlign = 'center';
+            context.textBaseline = 'top';
+
+            const logoOverlayWidth = overlayWidth * (logoScale / 100);
+            if (logoPreview) {
+                logoImage = await loadCanvasImage(logoPreview);
+                logoHeight = logoOverlayWidth * (logoImage.naturalHeight / logoImage.naturalWidth);
+            }
+
+            if (customText.trim() && !textError) {
+                textLines = getWrappedLines(context, customText.trim(), overlayWidth);
+                textHeight = textLines.length * canvasTextSize * 1.2;
+            }
+
+            context.shadowColor = 'rgba(0, 0, 0, 0.28)';
+            context.shadowBlur = 10 * scale;
+            context.shadowOffsetY = 2 * scale;
+
+            if (logoImage) {
+                const logoCenterX = canvasSize * (logoPosition.x / 100);
+                const logoCenterY = canvasSize * (logoPosition.y / 100);
+                drawContainedImage(context, logoImage, logoCenterX, logoCenterY - logoHeight / 2, logoOverlayWidth);
+            }
+
+            if (textLines.length > 0) {
+                context.fillStyle = textColor;
+                context.font = `700 ${canvasTextSize}px "${fontFamily}", sans-serif`;
+                
+                const textCenterX = canvasSize * (textPosition.x / 100);
+                const textCenterY = canvasSize * (textPosition.y / 100);
+                const startY = textCenterY - textHeight / 2;
+
+                textLines.forEach((line, index) => {
+                    context.fillText(line, textCenterX, startY + index * canvasTextSize * 1.2, overlayWidth);
+                });
+            }
+
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'shirt-design.png';
+            link.click();
+        } catch {
+            alert('Unable to download this design. Please try another image.');
+        }
+    };
 
     if (!images || images.length === 0) {
         return (
@@ -30,42 +338,166 @@ export default function ProductGallery({ images }: ProductGalleryProps) {
     }
 
     return (
-        <div className="flex flex-col gap-4">
-            {/* Main Image */}
-            <div className="relative aspect-square bg-gray-100 rounded-3xl overflow-hidden group">
-                <Image
-                    src={selectedImage}
-                    alt="Product Image"
-                    fill
-                    priority
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-            </div>
-
+        <div className="flex items-start gap-4 w-full h-full justify-center">
             {/* Thumbnails */}
             {images.length > 1 && (
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                    {images.map((image) => (
+                <div className="flex w-20 flex-shrink-0 flex-col items-center gap-2 sm:w-24">
+                    {showThumbnailSlider && (
                         <button
-                            key={image.id}
-                            onClick={() => setSelectedImage(image.imageUrl)}
-                            className={cn(
-                                "relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-200",
-                                selectedImage === image.imageUrl
-                                    ? "border-black scale-95"
-                                    : "border-transparent opacity-70 hover:opacity-100"
-                            )}
+                            type="button"
+                            onClick={() => scrollThumbnails('up')}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:border-gray-400 hover:text-black"
+                            aria-label="Show previous product images"
                         >
-                            <Image
-                                src={image.imageUrl}
-                                alt="Thumbnail"
-                                fill
-                                className="object-cover"
-                            />
+                            <ChevronUp className="h-4 w-4" aria-hidden="true" />
                         </button>
-                    ))}
+                    )}
+
+                    <div
+                        ref={thumbnailListRef}
+                        className="flex max-h-[22rem] flex-col gap-3 overflow-y-auto scroll-smooth pr-1 scrollbar-hide sm:max-h-[28rem] sm:gap-4"
+                    >
+                        {images.map((image) => (
+                            <button
+                                key={image.id}
+                                type="button"
+                                onClick={() => {
+                                    if (onImageSelect) {
+                                        onImageSelect(image.imageUrl);
+                                    } else {
+                                        setLocalActiveImage(image.imageUrl);
+                                    }
+                                }}
+                                className={cn(
+                                    "relative h-20 w-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-200 sm:h-24 sm:w-24",
+                                    activeImage === image.imageUrl
+                                        ? "border-black scale-95"
+                                        : "border-transparent opacity-70 hover:opacity-100"
+                                )}
+                            >
+                                <Image
+                                    src={image.imageUrl}
+                                    alt="Thumbnail"
+                                    fill
+                                    className="object-cover"
+                                />
+                            </button>
+                        ))}
+                    </div>
+
+                    {showThumbnailSlider && (
+                        <button
+                            type="button"
+                            onClick={() => scrollThumbnails('down')}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:border-gray-400 hover:text-black"
+                            aria-label="Show more product images"
+                        >
+                            <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                    )}
                 </div>
             )}
+
+            <div ref={mainImageRef} className={`relative aspect-square h-full max-h-full flex-1 rounded-3xl overflow-hidden group ${objectFit === 'contain' ? 'bg-white' : 'bg-gray-100'}`}>
+                {isCustomTemplate && shirtColor ? (
+                    <>
+                        <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{
+                                backgroundColor: shirtColor,
+                                maskImage: `url(${activeImage})`,
+                                WebkitMaskImage: `url(${activeImage})`,
+                                maskSize: objectFit === 'contain' ? 'contain' : 'cover',
+                                maskPosition: 'center',
+                                WebkitMaskSize: objectFit === 'contain' ? 'contain' : 'cover',
+                                WebkitMaskPosition: 'center',
+                                maskRepeat: 'no-repeat',
+                                WebkitMaskRepeat: 'no-repeat',
+                            }}
+                        />
+                        <Image
+                            src={activeImage}
+                            draggable={false}
+                            alt="Product Image Details"
+                            fill
+                            priority
+                            className={`${objectFit === 'contain' ? 'object-contain' : 'object-cover'} mix-blend-multiply pointer-events-none`}
+                        />
+                    </>
+                ) : (
+                    <Image
+                        src={activeImage}
+                        draggable={false}
+                        alt="Product Image"
+                        fill
+                        priority
+                        className={`${objectFit === 'contain' ? 'object-contain' : 'object-cover'} transition-transform duration-500`}
+                    />
+                )}
+
+                <button
+                    type="button"
+                    onClick={handleDownloadDesign}
+                    className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-900 shadow-md backdrop-blur transition hover:bg-white hover:scale-105"
+                    aria-label="Download shirt design"
+                    title="Download shirt design"
+                >
+                    <Download className="h-5 w-5" aria-hidden="true" />
+                </button>
+
+                {logoPreview && (
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: `${logoPosition.x}%`,
+                            top: `${logoPosition.y}%`,
+                            transform: 'translate(-50%, -50%)',
+                            cursor: 'move',
+                            width: `${192 * (logoScale / 100)}px`,
+                        }}
+                        onMouseDown={(e) => handleStartDrag(e, 'logo')}
+                        onTouchStart={(e) => handleStartDrag(e, 'logo')}
+                        className="z-20 max-w-[80%] flex items-center justify-center border-2 border-dashed border-transparent hover:border-[#443DFF]/40 hover:bg-[#443DFF]/5 rounded-xl p-2 transition group/logo select-none"
+                    >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={logoPreview}
+                            alt="Uploaded logo preview"
+                            draggable={false}
+                            className="max-w-full max-h-full object-contain drop-shadow-md select-none"
+                        />
+                        <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/85 backdrop-blur-sm text-[10px] text-white px-2 py-0.5 rounded shadow-sm opacity-0 group-hover/logo:opacity-100 transition duration-150 pointer-events-none">
+                            Drag Logo
+                        </span>
+                    </div>
+                )}
+
+                {customText.trim() && !textError && (
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: `${textPosition.x}%`,
+                            top: `${textPosition.y}%`,
+                            transform: 'translate(-50%, -50%)',
+                            cursor: 'move',
+                        }}
+                        onMouseDown={(e) => handleStartDrag(e, 'text')}
+                        onTouchStart={(e) => handleStartDrag(e, 'text')}
+                        className="z-20 max-w-[80%] text-center border-2 border-dashed border-transparent hover:border-[#443DFF]/40 hover:bg-[#443DFF]/5 rounded-xl p-2 transition group/text select-none"
+                    >
+                        <p
+                            className="max-w-full break-words text-center font-bold leading-tight drop-shadow-md select-none"
+                            style={{ color: textColor, fontFamily, fontSize: `${textSize}px` }}
+                        >
+                            {customText}
+                        </p>
+                        <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/85 backdrop-blur-sm text-[10px] text-white px-2 py-0.5 rounded shadow-sm opacity-0 group-hover/text:opacity-100 transition duration-150 pointer-events-none">
+                            Drag Text
+                        </span>
+                    </div>
+                )}
+            </div>
+
         </div>
     );
 }

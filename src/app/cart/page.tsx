@@ -57,7 +57,7 @@ export default async function CartPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-8">
             <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
 
             <div className="grid lg:grid-cols-3 gap-8">
@@ -85,7 +85,7 @@ export default async function CartPage() {
                                         {item.variant.size} - {item.variant.color}
                                     </p>
                                     <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
-                                    <p className="font-bold mt-2">${(finalPrice * item.quantity).toFixed(2)}</p>
+                                    <p className="font-bold mt-2">Rs. {(finalPrice * item.quantity).toFixed(2)}</p>
                                 </div>
                                 <RemoveFromCartButton itemId={item.id} />
                             </div>
@@ -99,7 +99,7 @@ export default async function CartPage() {
                     <div className="space-y-2 mb-4">
                         <div className="flex justify-between">
                             <span>Subtotal</span>
-                            <span>${subtotal.toFixed(2)}</span>
+                            <span>Rs. {subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Shipping</span>
@@ -107,7 +107,7 @@ export default async function CartPage() {
                         </div>
                         <div className="border-t pt-2 flex justify-between font-bold text-lg">
                             <span>Total</span>
-                            <span>${subtotal.toFixed(2)}</span>
+                            <span>Rs. {subtotal.toFixed(2)}</span>
                         </div>
                     </div>
                     <Link href="/checkout">

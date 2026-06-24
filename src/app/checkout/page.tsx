@@ -28,17 +28,20 @@ export default async function CheckoutPage() {
         },
     });
 
-    const cartItems = (cart?.items || []).map(item => ({
-        ...item,
-        variant: {
-            ...item.variant,
-            product: {
-                ...item.variant.product,
-                price: Number(item.variant.product.price),
-                discount: Number(item.variant.product.discount),
+    const cartItems = (cart?.items || []).map(item => {
+        const { customLogoData, customPreviewFrontData, customPreviewBackData, ...safeItem } = item;
+        return {
+            ...safeItem,
+            variant: {
+                ...item.variant,
+                product: {
+                    ...item.variant.product,
+                    price: Number(item.variant.product.price),
+                    discount: Number(item.variant.product.discount),
+                }
             }
-        }
-    }));
+        };
+    });
 
     if (cartItems.length === 0) {
         redirect('/cart');
@@ -52,7 +55,7 @@ export default async function CheckoutPage() {
     }, 0);
 
     return (
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-8">
             <h1 className="text-3xl font-bold mb-8">Checkout</h1>
             <CheckoutForm cartItems={cartItems} total={total} />
         </div>

@@ -19,11 +19,19 @@ interface AddToCartButtonProps {
     description?: string;
 }
 
-export default function AddToCartButton({ productId, variants, description }: AddToCartButtonProps) {
+export default function AddToCartButton({ variants, description }: AddToCartButtonProps) {
     const { data: session } = useSession();
     const router = useRouter();
     const [selectedVariantId, setSelectedVariantId] = useState<string>('');
     const [loading, setLoading] = useState(false);
+
+    const handleVariantSelect = (variantId: string) => {
+        setSelectedVariantId(variantId);
+        const variant = variants.find((v) => v.id === variantId);
+        if (variant) {
+            window.dispatchEvent(new CustomEvent('variant-selected', { detail: variant }));
+        }
+    };
 
     const handleAddToCart = async () => {
         if (!session) {
@@ -54,7 +62,7 @@ export default function AddToCartButton({ productId, variants, description }: Ad
             } else {
                 alert('Failed to add to cart');
             }
-        } catch (error) {
+        } catch {
             alert('Something went wrong');
         } finally {
             setLoading(false);
@@ -83,7 +91,7 @@ export default function AddToCartButton({ productId, variants, description }: Ad
                         <button
                             key={variant.id}
                             disabled={variant.stock === 0}
-                            onClick={() => setSelectedVariantId(variant.id)}
+                            onClick={() => handleVariantSelect(variant.id)}
                             className={cn(
                                 "px-4 py-2 rounded-full border-2 transition-all duration-200 text-sm font-medium",
                                 selectedVariantId === variant.id

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { Package, ShoppingCart, Users, DollarSign } from 'lucide-react';
+import { Package, ShoppingCart, Users, Coins } from 'lucide-react';
 
 export default async function AdminDashboard() {
     const session = await getServerSession(authOptions);
@@ -48,8 +48,8 @@ export default async function AdminDashboard() {
         },
         {
             title: 'Revenue',
-            value: `$${Number(totalRevenue._sum.totalAmount || 0).toFixed(2)}`,
-            icon: DollarSign,
+            value: `Rs. ${Number(totalRevenue._sum.totalAmount || 0).toFixed(2)}`,
+            icon: Coins,
             href: '/admin/orders',
         },
     ];

@@ -3,9 +3,13 @@
 import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Youtube, Mail, ArrowRight } from 'lucide-react';
 import Button from './ui/Button';
+import { usePathname } from 'next/navigation';
 
 const Footer = () => {
+    const pathname = usePathname();
     const currentYear = new Date().getFullYear();
+
+    const isHidden = pathname?.startsWith('/admin') || false;
 
     const footerLinks = {
         shop: [
@@ -29,7 +33,7 @@ const Footer = () => {
     };
 
     return (
-        <footer className="relative mt-1 pb-10 overflow-hidden">
+        <footer className={`relative mt-1 pb-10 overflow-hidden ${isHidden ? 'hidden' : ''}`}>
             {/* Mesh Gradient Background */}
             <div className="absolute inset-0 mesh-gradient opacity-30 -z-10" />
 

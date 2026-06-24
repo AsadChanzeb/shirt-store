@@ -20,23 +20,23 @@ export default async function HomePage() {
     <div className="bg-white">
       {/* Hero Section with Mesh Gradient */}
       {/* Hero Section with Mesh Gradient */}
-      <section className="relative min-h-screen flex items-center mesh-gradient overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-32 relative z-10 w-full">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="relative h-screen flex items-center mesh-gradient overflow-hidden">
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-12 pt-32 pb-10 relative z-10 w-full">
+          <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center justify-between">
             {/* Left Column: Text Content */}
-            <div className="max-w-3xl">
+            <div className="w-full lg:w-[45%] max-w-3xl shrink-0">
               {/* Hero Heading - Mixed Fonts */}
-              <h1 className="text-7xl md:text-8xl lg:text-[100px] font-medium leading-[1.1] tracking-tight mb-8">
-                Building bold brands with{' '}
-                <span className="font-serif-italic font-normal">thoughtful design</span>
+              <h1 className="text-6xl md:text-7xl lg:text-[80px] xl:text-[90px] font-medium leading-[1.1] tracking-tight mb-6 font-serif-italic">
+                Your Imagination. {' '}
+                <span className="font-serif-italic" >Your Shirt</span>
               </h1>
 
-              <p className="text-xl md:text-2xl text-[#B1B1B1] mb-12 max-w-xl leading-relaxed">
-                At ShirtStore, we help fashion enthusiasts discover premium quality shirts with tailored fits, guiding you from selection to style in a competitive market.
+              <p className="text-lg md:text-xl text-[#B1B1B1] mb-8 max-w-xl leading-relaxed">
+                Design your perfect shirt from scratch with our live customization studio. Colors, graphics, fonts all in your hands. No design skills needed
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <Link href="/shop">
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <Link href="/customize">
                   <Button
                     size="lg"
                     className="bg-[#443DFF] hover:bg-[#3730E3] text-white rounded-full px-8 h-14 text-base font-medium"
@@ -69,10 +69,10 @@ export default async function HomePage() {
             </div>
 
             {/* Right Column: Hero Visual */}
-            <div className="relative hidden lg:block">
-              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-all duration-500 ease-out border-4 border-white/20">
+            <div className="relative hidden lg:block w-full lg:w-[55%] xl:w-[60%]">
+              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl rotate-1 hover:rotate-0 transition-all duration-500 ease-out border-4 border-white/20">
                 <img
-                  src="/hero-main.png"
+                  src="/images/Landing page.png"
                   alt="Diverse group of models wearing stylish shirts"
                   className="w-full h-auto object-cover"
                 />

@@ -11,7 +11,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { variantId, quantity } = await req.json();
+        const {
+            variantId,
+            quantity,
+            customText,
+            customTextColor,
+            customTextSize,
+            customTextFont,
+            customTextX,
+            customTextY,
+            customLogoData,
+            customLogoX,
+            customLogoY,
+            customLogoScale,
+            customPreviewFrontData,
+            customPreviewBackData,
+        } = await req.json();
 
         if (!variantId || !quantity) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -30,11 +45,20 @@ export async function POST(req: Request) {
             });
         }
 
-        // Check if item already in cart
+        // Check if item with identical customization is already in cart
         const existingItem = await prisma.cartItem.findFirst({
             where: {
                 cartId: cart.id,
                 productVariantId: variantId,
+                customText: customText || null,
+                customTextColor: customTextColor || null,
+                customTextSize: customTextSize ? Number(customTextSize) : null,
+                customTextFont: customTextFont || null,
+                customTextX: customTextX ? Number(customTextX) : null,
+                customTextY: customTextY ? Number(customTextY) : null,
+                customLogoX: customLogoX ? Number(customLogoX) : null,
+                customLogoY: customLogoY ? Number(customLogoY) : null,
+                customLogoScale: customLogoScale ? Number(customLogoScale) : null,
             },
         });
 
@@ -51,6 +75,18 @@ export async function POST(req: Request) {
                     cartId: cart.id,
                     productVariantId: variantId,
                     quantity,
+                    customText: customText || null,
+                    customTextColor: customTextColor || null,
+                    customTextSize: customTextSize ? Number(customTextSize) : null,
+                    customTextFont: customTextFont || null,
+                    customTextX: customTextX ? Number(customTextX) : null,
+                    customTextY: customTextY ? Number(customTextY) : null,
+                    customLogoData: customLogoData ? Buffer.from(customLogoData, 'base64') : null,
+                    customLogoX: customLogoX ? Number(customLogoX) : null,
+                    customLogoY: customLogoY ? Number(customLogoY) : null,
+                    customLogoScale: customLogoScale ? Number(customLogoScale) : null,
+                    customPreviewFrontData: customPreviewFrontData ? Buffer.from(customPreviewFrontData, 'base64') : null,
+                    customPreviewBackData: customPreviewBackData ? Buffer.from(customPreviewBackData, 'base64') : null,
                 },
             });
         }

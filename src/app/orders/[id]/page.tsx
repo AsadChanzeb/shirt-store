@@ -67,11 +67,11 @@ export default async function OrderPage({ params, searchParams }: OrderPageProps
                             </div>
                             <div>
                                 <p className="text-gray-600">Date</p>
-                                <p className="font-semibold">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                <p className="font-semibold" suppressHydrationWarning>{new Date(order.createdAt).toLocaleDateString()}</p>
                             </div>
                             <div>
                                 <p className="text-gray-600">Total</p>
-                                <p className="font-semibold">${Number(order.totalAmount).toFixed(2)}</p>
+                                <p className="font-semibold">Rs. {Number(order.totalAmount).toFixed(2)}</p>
                             </div>
                         </div>
 
@@ -85,7 +85,7 @@ export default async function OrderPage({ params, searchParams }: OrderPageProps
                                             {item.quantity}
                                         </span>
                                         <span className="font-semibold">
-                                            ${(Number(item.price) * item.quantity).toFixed(2)}
+                                            Rs. {(Number(item.price) * item.quantity).toFixed(2)}
                                         </span>
                                     </div>
                                 ))}

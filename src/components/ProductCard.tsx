@@ -78,7 +78,7 @@ export default function ProductCard({ id, name, price, discount, images, slug }:
                     <div className="flex flex-col">
                         <span className="text-gray-400 text-sm font-medium">Price</span>
                         <span className="text-lg font-bold text-[#308B6B]">
-                            ${finalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            Rs. {finalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                     </div>
 

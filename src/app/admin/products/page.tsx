@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Button from '@/components/ui/Button';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
+import DeleteProductButton from '@/components/admin/DeleteProductButton';
 
 export default async function AdminProductsPage() {
     const session = await getServerSession(authOptions);
@@ -60,16 +61,29 @@ export default async function AdminProductsPage() {
                                 <td className="px-6 py-4 whitespace-nowrap">{product.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{product.category.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    ${Number(product.price).toFixed(2)}
+                                    Rs. {Number(product.price).toFixed(2)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">{product.variants.length}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <Link
-                                        href={`/product/${product.id}`}
-                                        className="text-blue-600 hover:underline mr-4"
-                                    >
-                                        View
-                                    </Link>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium animate-fade-in">
+                                    <div className="flex items-center gap-3">
+                                        <Link
+                                            href={`/product/${product.id}`}
+                                            className="text-blue-600 hover:text-blue-900 transition-colors font-semibold"
+                                        >
+                                            View
+                                        </Link>
+                                        <Link
+                                            href={`/admin/products/${product.id}/edit`}
+                                            className="hover:bg-amber-50 text-amber-500 hover:text-amber-700 transition-colors duration-150 p-2 h-9 w-9 inline-flex items-center justify-center rounded-md"
+                                            title="Edit Product"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </Link>
+                                        <DeleteProductButton
+                                            productId={product.id}
+                                            productName={product.name}
+                                        />
+                                    </div>
                                 </td>
                             </tr>
                         ))}

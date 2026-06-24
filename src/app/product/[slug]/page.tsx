@@ -31,7 +31,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             : Number(product.price);
 
     return (
-        <div className="bg-white min-h-screen">
+        <div className="bg-white min-h-screen pt-32">
             {/* Breadcrumbs */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <nav className="flex text-sm text-gray-500 gap-2">
@@ -58,12 +58,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
                             </h1>
                             <div className="flex items-center gap-4">
                                 <span className="text-3xl font-medium text-black">
-                                    ${finalPrice.toFixed(2)}
+                                    Rs. {finalPrice.toFixed(2)}
                                 </span>
                                 {Number(product.discount) > 0 && (
                                     <>
                                         <span className="text-xl text-gray-400 line-through">
-                                            ${Number(product.price).toFixed(2)}
+                                            Rs. {Number(product.price).toFixed(2)}
                                         </span>
                                         <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-sm font-bold">
                                             -{Number(product.discount)}% OFF

@@ -2,17 +2,21 @@
 
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { ShoppingCart, Menu, X } from 'lucide-react';
+import { ShoppingCart, Menu, X, User } from 'lucide-react';
 import { useState } from 'react';
 import Button from './ui/Button';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
+    const pathname = usePathname();
     const { data: session } = useSession();
     const isAdmin = (session?.user as any)?.role === 'ADMIN';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    const isHidden = pathname?.startsWith('/admin') || false;
+
     return (
-        <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl">
+        <nav className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl ${isHidden ? 'hidden' : ''}`}>
             <div className="glass rounded-full border border-gray-200/50 shadow-lg px-6 py-4 relative">
                 <div className="flex justify-between items-center">
                     {/* Logo */}
@@ -51,16 +55,15 @@ export default function Navbar() {
                         </Link>
 
                         {session ? (
-                            <div className="hidden sm:flex items-center space-x-3">
-                                <span className="text-sm font-medium hidden sm:block">
-                                    {session.user?.name || session.user?.email?.split('@')[0]}
-                                </span>
-                                <button
-                                    onClick={() => signOut()}
-                                    className="text-sm font-medium hover:text-[#443DFF] transition"
-                                >
-                                    Sign Out
-                                </button>
+                            <div className="hidden sm:flex items-center space-x-4">
+                                <Link href="/profile" className="flex items-center space-x-2 text-sm font-medium hover:text-[#443DFF] transition">
+                                    <div className="bg-gray-100 p-1.5 rounded-full">
+                                        <User className="w-4 h-4" />
+                                    </div>
+                                    <span className="hidden sm:block">
+                                        {session.user?.name || session.user?.email?.split('@')[0]}
+                                    </span>
+                                </Link>
                             </div>
                         ) : (
                             <div className="hidden sm:flex items-center space-x-2">
@@ -104,7 +107,7 @@ export default function Navbar() {
                         <div className="pt-2 border-t border-gray-100 flex flex-col gap-3">
                             {session ? (
                                 <>
-                                    <span className="text-sm text-gray-500">{session.user?.name || session.user?.email}</span>
+                                    <Link href="/profile" className="text-sm font-medium py-2 hover:text-[#443DFF]" onClick={() => setIsMobileMenuOpen(false)}>My Profile</Link>
                                     <button onClick={() => signOut()} className="text-sm font-medium text-red-500">Sign Out</button>
                                 </>
                             ) : (
