@@ -1,0 +1,91 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Arial;}}
+\fs24
+\qc\b Product Customization Updates Documentation\b0\par
+\qc Shirt Store Product Page\par
+\par
+\ql\b Overview\b0\par
+This document explains the new product image and shirt customization features added to the product page. The wording is simple so it is easy to understand and share.\par
+\par
+\b 1. Product Gallery Layout\b0\par
+The product gallery was changed so the small product images are shown vertically on the left side of the big product image.\par
+\par
+Before this change, the small images were shown under the big image. Now the big image and small images are parallel, which makes the product view cleaner and easier to use.\par
+\par
+\b 2. Vertical Thumbnail Slider\b0\par
+When there are many product images, the small image list now works like a vertical slider.\par
+\par
+The user can use the up and down arrow buttons to move through more product images. This is useful when the shirt has many angle images, such as front view, back view, side view, and close-up view.\par
+\par
+\b 3. Add Design Section Moved Under Image\b0\par
+The design controls were moved under the big product image. This was done because the right side of the product page had too much content and the user had to scroll to see important buying options.\par
+\par
+Now the right side shows the main buying information first, such as product name, price, color, description, size, and Add to Cart button.\par
+\par
+\b 4. Compact Logo and Text Inputs\b0\par
+The logo upload input and custom text input were placed side by side in one row.\par
+\par
+This makes the design section shorter and cleaner. The user can add a logo image and add custom text without taking too much screen space.\par
+\par
+\b 5. Better Logo Upload Field\b0\par
+The default file input was replaced with a cleaner upload control.\par
+\par
+It now has an Upload button with an icon, and the selected file name is shown beside it. Long file names are shortened visually so they do not break the layout.\par
+\par
+\b 6. Text Style Popup\b0\par
+When the user clicks inside the custom text input, a text style popup opens.\par
+\par
+This popup contains the controls for changing the shirt text style. The popup keeps the page clean because font, color, and size controls are not always visible under the image.\par
+\par
+\b 7. Draggable Popup\b0\par
+The text style popup can be moved by dragging its header.\par
+\par
+The user can click and hold the popup header, then move it to another place on the screen. This helps if the popup is covering something the user wants to see.\par
+\par
+\b 8. Close Popup Button\b0\par
+The popup has an X button.\par
+\par
+When the user clicks the X button, the popup closes. The selected text style stays applied to the shirt.\par
+\par
+\b 9. More Stylish Font Options\b0\par
+Many more font styles were added. The font list now includes more than 100 font options.\par
+\par
+These fonts include stylish, script, bold, retro, handwritten, pixel, decorative, and display fonts. This gives users more creative choices for shirt text.\par
+\par
+\b 10. Searchable Font Picker\b0\par
+The font dropdown was changed into a searchable font picker.\par
+\par
+The user can type a font name in the search field. The list then shows matching font styles. Each font option is previewed using its own style, so the user can see how it looks before selecting it.\par
+\par
+\b 11. Text Color Picker\b0\par
+The user can choose a text color from color buttons or use the color input.\par
+\par
+The selected color is applied directly to the text shown on the shirt preview.\par
+\par
+\b 12. Text Size Control\b0\par
+A font size control was added inside the text style popup.\par
+\par
+The user can choose from standard sizes like Small, Medium, Standard, Large, and Extra Large.\par
+\par
+There is also an Other option. When the user chooses Other, a custom size input appears. The user can then enter their own text size.\par
+\par
+\b 13. Live Shirt Preview\b0\par
+When the user adds a logo or text, it appears on the shirt image.\par
+\par
+Changes to font family, font color, and font size update the shirt preview immediately. This helps the user see the design before buying.\par
+\par
+\b 14. Download Shirt Design Button\b0\par
+A download icon button was added at the top right of the big product image.\par
+\par
+The button uses only an icon, not text, so it looks clean. When the user clicks it, the current shirt design is downloaded as an image file.\par
+\par
+\b 15. Download Includes Current Design\b0\par
+The downloaded image includes the selected shirt image, uploaded logo, custom text, selected font style, selected text color, and selected font size.\par
+\par
+This lets the user save a picture of the shirt design they created.\par
+\par
+\b Final Result\b0\par
+The product page now gives the user a better shirt customization experience. The page is cleaner, easier to use, and more professional.\par
+\par
+Users can view product images, add a logo, add custom text, style the text, move the style popup, and download the final shirt design.\par
+}
