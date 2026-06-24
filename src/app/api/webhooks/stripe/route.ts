@@ -3,9 +3,11 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: '2025-12-15.clover',
-});
+function getStripe() {
+    return new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+        apiVersion: '2025-12-15.clover',
+    });
+}
 
 export async function POST(req: Request) {
     const body = await req.text();
@@ -19,7 +21,7 @@ export async function POST(req: Request) {
             throw new Error('STRIPE_WEBHOOK_SECRET is not set');
         }
 
-        event = stripe.webhooks.constructEvent(
+        event = getStripe().webhooks.constructEvent(
             body,
             signature,
             webhookSecret
