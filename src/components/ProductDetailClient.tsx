@@ -739,7 +739,6 @@ export default function ProductDetailClient({
                     <AddToCartButton
                         productId={productId}
                         variants={variants}
-                        selectedColor={selectedColor}
                         description={description}
                     />
                 </div>
