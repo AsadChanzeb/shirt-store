@@ -14,6 +14,7 @@ export default withAuth(
         return NextResponse.next();
     },
     {
+        secret: process.env.AUTH_SECRET,
         callbacks: {
             authorized: ({ token, req }) => {
                 const isAuthRoute = req.nextUrl.pathname.startsWith("/login") ||

@@ -58,6 +58,17 @@ export const authOptions: NextAuthOptions = {
                 token.id = user.id;
                 token.role = (user as any).role;
             }
+            // Always fetch the latest role from DB to handle Google OAuth users
+            // and role changes made after initial sign-in
+            if (token.id && !token.role) {
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: token.id as string },
+                    select: { role: true },
+                });
+                if (dbUser) {
+                    token.role = dbUser.role;
+                }
+            }
             return token;
         },
         async session({ session, token }) {
