@@ -4,9 +4,7 @@ CUSTOM SHIRT STORE & CUSTOMIZATION SYSTEM
 Version 1.1
 
 Prepared By
-Shehryar Sarwar
-Zarish Zafar
-25,May,2026
+
 
 ## Revision History
 | Version | Description | Author | Date |

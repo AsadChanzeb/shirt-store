@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -17,13 +17,24 @@ interface AddToCartButtonProps {
     productId: string;
     variants: Variant[];
     description?: string;
+    selectedColor?: string;
 }
 
-export default function AddToCartButton({ variants, description }: AddToCartButtonProps) {
+export default function AddToCartButton({ productId, variants, description, selectedColor }: AddToCartButtonProps) {
     const { data: session } = useSession();
     const router = useRouter();
     const [selectedVariantId, setSelectedVariantId] = useState<string>('');
     const [loading, setLoading] = useState(false);
+
+    // Reset selected variant if it doesn't match the new selectedColor
+    useEffect(() => {
+        if (selectedColor && selectedVariantId) {
+            const currentVariant = variants.find((v) => v.id === selectedVariantId);
+            if (currentVariant && currentVariant.color.toLowerCase() !== selectedColor.toLowerCase()) {
+                setSelectedVariantId('');
+            }
+        }
+    }, [selectedColor, selectedVariantId, variants]);
 
     const handleVariantSelect = (variantId: string) => {
         setSelectedVariantId(variantId);
@@ -69,6 +80,10 @@ export default function AddToCartButton({ variants, description }: AddToCartButt
         }
     };
 
+    const filteredVariants = selectedColor
+        ? variants.filter((v) => v.color.toLowerCase() === selectedColor.toLowerCase())
+        : variants;
+
     return (
         <div className="space-y-8">
             {description && (
@@ -87,7 +102,7 @@ export default function AddToCartButton({ variants, description }: AddToCartButt
                     </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {variants.map((variant) => (
+                    {filteredVariants.map((variant) => (
                         <button
                             key={variant.id}
                             disabled={variant.stock === 0}
@@ -100,7 +115,7 @@ export default function AddToCartButton({ variants, description }: AddToCartButt
                                 variant.stock === 0 && "opacity-40 cursor-not-allowed line-through"
                             )}
                         >
-                            {variant.size} - {variant.color}
+                            {selectedColor ? variant.size : `${variant.size} - ${variant.color}`}
                         </button>
                     ))}
                 </div>

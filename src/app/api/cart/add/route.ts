@@ -34,6 +34,16 @@ export async function POST(req: Request) {
 
         const userId = (session.user as any).id;
 
+        // Verify user actually exists in DB (guards against stale JWT cookies after DB resets)
+        const userExists = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true },
+        });
+
+        if (!userExists) {
+            return NextResponse.json({ error: 'User not found. Please sign in again.' }, { status: 401 });
+        }
+
         // Get or create cart
         let cart = await prisma.cart.findUnique({
             where: { userId },

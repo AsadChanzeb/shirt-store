@@ -28,12 +28,12 @@ interface SideDesign {
 }
 
 const SHIRT_COLORS = [
-    { name: 'White', value: '#ffffff', frontImage: '/images/shirt-front.png', backImage: '/images/shirt-back.png' },
-    { name: 'Black', value: '#1a1a1a', frontImage: '/images/black.png', backImage: '/images/black.png' },
-    { name: 'Gray', value: '#6b7280', frontImage: '/images/gray.png', backImage: '/images/gray.png' },
-    { name: 'Navy Blue', value: '#1e3a5f', frontImage: '/images/navyblue.png', backImage: '/images/navyblue.png' },
-    { name: 'Red', value: '#dc2626', frontImage: '/images/red.png', backImage: '/images/red.png' },
-    { name: 'Green', value: '#166534', frontImage: '/images/green.png', backImage: '/images/green.png' },
+    { name: 'White', value: '#ffffff', frontImage: '/images/whitefront.png', backImage: '/images/whiteback.png' },
+    { name: 'Black', value: '#1a1a1a', frontImage: '/images/blackfront.png', backImage: '/images/blackback.png' },
+    { name: 'Gray', value: '#6b7280', frontImage: '/images/grayfront.png', backImage: '/images/grayback.png' },
+    { name: 'Navy Blue', value: '#1e3a5f', frontImage: '/images/navybluefront.png', backImage: '/images/navyblueback.png' },
+    { name: 'Red', value: '#dc2626', frontImage: '/images/redfront.png', backImage: '/images/redback.png' },
+    { name: 'Green', value: '#166534', frontImage: '/images/greenfront.png', backImage: '/images/greenback.png' },
 ];
 
 const FONT_OPTIONS = [
@@ -215,7 +215,7 @@ export default function CustomizePage() {
 
             let customPreviewFrontUrl = null;
             if (hasFrontDesign) {
-                frontBlob = await renderDesignToBlob('/images/shirt-front.png', {
+                frontBlob = await renderDesignToBlob(selectedColor.frontImage, {
                     ...designs.front,
                     logoPreview: frontLogoUrl,
                 });
@@ -235,7 +235,7 @@ export default function CustomizePage() {
 
             let customPreviewBackUrl = null;
             if (hasBackDesign) {
-                backBlob = await renderDesignToBlob('/images/shirt-back.png', {
+                backBlob = await renderDesignToBlob(selectedColor.backImage, {
                     ...designs.back,
                     logoPreview: backLogoUrl,
                 });
